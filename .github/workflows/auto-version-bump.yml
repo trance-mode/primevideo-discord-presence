@@ -1,0 +1,49 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # To get tags
+
+      - name: 🧮 Get latest version
+        id: get_version
+        run: |
+          latest=$(git tag --list 'v*' | sort -V | tail -n1)
+          echo "Latest tag: $latest"
+          if [[ -z "$latest" ]]; then
+            version="0.1.0"
+          else
+            IFS='.' read -r major minor patch <<< "${latest#v}"
+            patch=$((patch + 1))
+            version="${major}.${minor}.${patch}"
+          fi
+          echo "NEW_VERSION=$version" >> $GITHUB_ENV
+
+      - name: 🛠 Replace version in manifest.json, log.js, Cargo.toml
+        run: |
+          echo "Updating version to $NEW_VERSION"
+          sed -i 's/"version": *"[0-9.]*"/"version": "'$NEW_VERSION'"/' extension/manifest.json
+          sed -i 's/const VERSION = ".*"/const VERSION = "'$NEW_VERSION'"/' extension/log.js
+          sed -i 's/^version = ".*"/version = "'$NEW_VERSION'"/' native/Cargo.toml
+
+      - name: 📝 Commit updated version
+        run: |
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git commit -am "chore: bump version to v$NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin HEAD
+          git push origin "v$NEW_VERSION"
