@@ -1,20 +1,18 @@
-# build_crx.ps1 - CRXファイルを生成するスクリプト
+# build_crx.ps1 - CRX file build script
 
-$ErrorActionPreference = "Stop"
+$crxName = "primevideo-discord-presence.crx"
+$manifestPath = "extension/manifest.json"
+$keyPath = "extension/key.pem"
 
-$extensionDir = "extension"
-$keyPath      = "key.pem"
-$outputCrx    = "pvdp.crx"
+# CRXツールインストール
+npm install -g crx3
 
-if (-Not (Test-Path $keyPath)) {
-    throw "❌ key.pem が見つかりません。"
-}
-if (-Not (Test-Path $extensionDir)) {
-    throw "❌ extension ディレクトリが見つかりません。"
-}
+# CRX秘密鍵をGitHub Secretsから復号して保存
+Write-Host "Decoding CRX private key..." -ForegroundColor Yellow
+echo "${{ secrets.CRX_PRIVATE_KEY }}" | base64 -d > $keyPath
 
-# Chrome 拡張のパッケージ化には crxmake を使用（Node.js / crx3-tools でも可）
-# 今回は PowerShell スクリプト側で node-crx パッケージ等の代替は使っていません
+# CRXファイル作成
+Write-Host "Creating .crx file..." -ForegroundColor Yellow
+crx3 --pack --key=$keyPath --crx="../$crxName" --manifest=$manifestPath
 
-# [ChromeのCRX仕様に沿って圧縮・署名する処理がここに必要（GitHub Actions上でバイナリまたは外部ツール使用）]
-Write-Host "⚠️ このスクリプトは GitHub Actions でのみ動作を想定（署名処理はCI上）"
+Write-Host "CRX file created: $crxName" -ForegroundColor Green

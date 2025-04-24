@@ -1,1 +1,0 @@
-C:\Users\Trance_Mode\Documents\GIT\primevideo-discord-presence\native\target\release\pvdp.exe: C:\Users\Trance_Mode\Documents\GIT\primevideo-discord-presence\native\build.rs C:\Users\Trance_Mode\Documents\GIT\primevideo-discord-presence\native\src\main.rs
