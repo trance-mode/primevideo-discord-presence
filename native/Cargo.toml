@@ -1,6 +1,6 @@
 [package]
 name    = "pvdp"
-version = "0.1.5"
+version = "0.0.0"
 edition = "2021"
 
 [dependencies]
@@ -22,6 +22,8 @@ webbrowser          = "0.8"
 windows-sys         = { version = "0.52", features = ["Win32_System_Console"] }
 futures-util        = "0.3"
 tokio-tungstenite   = "0.26"
+fs_extra = "1.3"              # ディレクトリ再帰コピー
+winreg   = "0.10"             # レジストリ操作
 
 [build-dependencies]
 embed-resource = "2.5"
