@@ -1,4 +1,4 @@
-name: Release
+name: Release with CRX
 
 on:
   push:
@@ -8,40 +8,32 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Rust
-        uses: actions/setup-rust@v1
+      - name: Set up Node.js (for crx3)
+        uses: actions/setup-node@v3
         with:
-          rust-version: stable
+          node-version: '18'
 
-      - name: Build Rust binary
+      - name: Install crx3 tool
         run: |
-          cd native
-          cargo build --release
+          npm install -g crx3
 
-      - name: Restore CRX private key
+      - name: Decode CRX private key from secrets
         run: |
           echo "${{ secrets.CRX_PRIVATE_KEY }}" | base64 -d > extension/key.pem
 
-      - name: Install crx pack tool
-        run: npm install -g crx3
-
-      - name: Pack Chrome Extension into .crx
+      - name: Create .crx file
         run: |
           cd extension
-          crx pack -o pvdp.crx -p key.pem
+          crx3 --pack --key=key.pem --crx=../primevideo-discord-presence.crx
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v1
         with:
           files: |
             native/target/release/pvdp.exe
-            extension/pvdp.crx
+            primevideo-discord-presence.crx
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
