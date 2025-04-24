@@ -5,10 +5,14 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write  # ✅ github-actions にファイルの push 権限を付与
+
 jobs:
   update-version:
     name: Sync version to files
     runs-on: ubuntu-latest
+
     steps:
       - name: 🧾 Checkout
         uses: actions/checkout@v3
