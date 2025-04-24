@@ -25,7 +25,7 @@ Write-Host "🧩 Registering Native Messaging host..." -ForegroundColor Yellow
 $hostManifestDir = "$env:LOCALAPPDATA\Google\Chrome\User Data\NativeMessagingHosts"
 New-Item -ItemType Directory -Path $hostManifestDir -Force | Out-Null
 
-$template = Get-Content "$repoRoot\installer\resources\com.pvdp.discord.presence.json" -Raw
+$template = Get-Content "$repoRoot\installer\com.pvdp.discord.presence.json" -Raw
 $exePath = "$repoRoot\native\target\release\pvdp.exe"
 $json = $template -replace "PRIME_BINARY_PATH", $exePath
 $json | Set-Content "$hostManifestDir\com.pvdp.discord.presence.json"
