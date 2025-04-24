@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
-use std::path::{Path, PathBuf};
-use anyhow::{Result, Context};
+use std::path::PathBuf;
+use anyhow::{Context, Result};
 use fs_extra::dir::{copy as copy_dir, CopyOptions};
 use serde_json::Value;
 use winreg::enums::*;
@@ -14,14 +14,17 @@ fn main() -> Result<()> {
     let manifest_path = extension_dir.join("manifest.json");
     let native_manifest = exe_dir.join("com.pvdp.discord.presence.json");
 
-    // === 1. version 読み取り ===
+    // === 1. manifest.json から version 読み取り ===
     let manifest_text = fs::read_to_string(&manifest_path)
         .context("failed to read manifest.json")?;
     let manifest_json: Value = serde_json::from_str(&manifest_text)?;
-    let version = manifest_json["version"].as_str().unwrap_or("0.0.0");
+    let version = manifest_json["version"]
+        .as_str()
+        .unwrap_or("0.0.0")
+        .to_string();
     println!("📦 Extension version = {}", version);
 
-    // === 2. ファイルをコピー ===
+    // === 2. ファイルを C:\Program Files にコピー ===
     if install_dir.exists() {
         println!("🧹 Removing existing install dir...");
         fs::remove_dir_all(&install_dir)?;
@@ -35,17 +38,30 @@ fn main() -> Result<()> {
     fs::copy(exe_dir.join("pvdp.exe"), install_dir.join("pvdp.exe"))?;
     fs::copy(&native_manifest, install_dir.join("com.pvdp.discord.presence.json"))?;
 
-    // === 3. NativeMessagingHosts レジストリ登録 ===
+    // === 3. NativeMessagingHost レジストリ登録 ===
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let nmh_key = hkcu.create_subkey(r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence")?;
-    nmh_key.set_value("", &format!(r"{}\com.pvdp.discord.presence.json", install_dir.display()))?;
+    let (nmh_key, _) = hkcu.create_subkey(
+        r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence"
+    )?;
+    nmh_key.set_value(
+        "",
+        &format!(
+            r"{}\com.pvdp.discord.presence.json",
+            install_dir.display()
+        ),
+    )?;
     println!("🔌 NativeMessagingHost registered");
 
-    // === 4. 拡張機能のレジストリ登録（DADP方式） ===
-    let ext_key = hkcu.create_subkey(r"Software\Google\Chrome\Extensions\com.pvdp.discord.presence")?;
+    // === 4. 拡張機能のレジストリ登録（レジストリID = 拡張ID） ===
+    let (ext_key, _) = hkcu.create_subkey(
+        r"Software\Google\Chrome\Extensions\com.pvdp.discord.presence"
+    )?;
     ext_key.set_value("path", &format!(r"{}\extension", install_dir.display()))?;
     ext_key.set_value("version", &version)?;
-    ext_key.set_value("manifest", &format!(r"{}\extension\manifest.json", install_dir.display()))?;
+    ext_key.set_value(
+        "manifest",
+        &format!(r"{}\extension\manifest.json", install_dir.display()),
+    )?;
     println!("🧩 Extension registered");
 
     println!("\n✅ Installation completed successfully!");
