@@ -1,62 +1,37 @@
-# windows.ps1 - PrimeVideo Discord Presence インストーラー（管理者チェック・昇格なし）
+# windows.ps1 - PrimeVideo Discord Presence インストーラー（.crx 自動登録対応）
 
-# 🚨 管理者権限チェック（昇格せず、案内のみ表示）
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
-    [Security.Principal.WindowsBuiltinRole]::Administrator)) {
-    Write-Host ""
-    Write-Host "🔐 このスクリプトは管理者として実行する必要があります。" -ForegroundColor Red
-    Write-Host "💡 PowerShell を「管理者として実行」してください（右クリック→管理者として実行）" -ForegroundColor Yellow
-    Write-Host ""
+Write-Host "📦 Installing PrimeVideo Discord Presence (.crx)" -ForegroundColor Cyan
+
+# ✅ 管理者権限チェック（昇格なし）
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+  ).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
+    Write-Host "🔒 管理者として実行してください。" -ForegroundColor Red
+    Write-Host "👉 PowerShell を右クリック →『管理者として実行』してください。" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "📦 Installing PrimeVideo Discord Presence..." -ForegroundColor Cyan
+# 📁 インストール先（Program Files）
+$installPath = "C:\Program Files\PrimeVideo Discord Presence"
+New-Item -ItemType Directory -Force -Path $installPath | Out-Null
 
-# GitHub Actions CI により自動更新されるバージョン
-$version = "1.4.0"
-$repoRoot = "C:\Program Files\PrimeVideo Discord Presence"
-$zipUrl   = "https://github.com/trance-mode/primevideo-discord-presence/archive/refs/heads/main.zip"
-$zipPath  = "$env:TEMP\pvdp.zip"
+# 📦 GitHub Release から最新バージョンの .crx をダウンロード
+$version = "1.4.0" # 本来は CI で埋め込み
+$repo    = "trance-mode/primevideo-discord-presence"
+$crxUrl  = "https://github.com/$repo/releases/download/v$version/primevideo-discord-presence.crx"
+$crxPath = "$installPath\primevideo-discord-presence.crx"
 
-# 🔽 再インストール対策：古いディレクトリを削除
-if (Test-Path $repoRoot) {
-    Remove-Item -Path $repoRoot -Recurse -Force
-    Write-Host "🧹 Removed old install directory." -ForegroundColor DarkGray
-}
+Write-Host "🌐 Downloading .crx from GitHub..." -ForegroundColor Yellow
+Invoke-WebRequest -Uri $crxUrl -OutFile $crxPath
 
-# 🔽 ダウンロードと展開
-Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
-Expand-Archive -Path $zipPath -DestinationPath $env:TEMP -Force
-Move-Item "$env:TEMP\primevideo-discord-presence-main" $repoRoot -Force
+# ✅ Chrome 拡張のレジストリ登録（.crx）
+Write-Host "🧩 Registering extension (.crx)..." -ForegroundColor Yellow
+$extensionId = "pvdp-extension"
+$updateUrl   = "https://clients2.google.com/service/update2/crx"
+$extKey      = "HKCU:\Software\Google\Chrome\Extensions\$extensionId"
 
-# 🔨 Rust バイナリビルド
-Push-Location "$repoRoot\native"
-Write-Host "🔧 Building Rust binary..." -ForegroundColor Yellow
-cargo build --release
-Pop-Location
-
-# 🧩 Native Messaging マニフェスト登録
-Write-Host "🧩 Registering Native Messaging host..." -ForegroundColor Yellow
-$hostManifestDir = "$env:LOCALAPPDATA\Google\Chrome\User Data\NativeMessagingHosts"
-New-Item -ItemType Directory -Path $hostManifestDir -Force | Out-Null
-
-$template = Get-Content "$repoRoot\installer\com.pvdp.discord.presence.json" -Raw
-$exePath = "$repoRoot\native\target\release\pvdp.exe"
-$json = $template -replace "PRIME_BINARY_PATH", $exePath
-$json | Set-Content "$hostManifestDir\com.pvdp.discord.presence.json"
-
-Write-Host "✅ Native host installed!" -ForegroundColor Green
-
-# 🧩 Chrome 拡張機能の自動追加（レジストリ）
-Write-Host "🧩 Registering Chrome extension..." -ForegroundColor Yellow
-$extensionPath = "$repoRoot\extension"
-$extensionKey  = "HKCU:\Software\Google\Chrome\Extensions\pvdp-extension"
-
-New-Item -Path $extensionKey -Force | Out-Null
-Set-ItemProperty -Path $extensionKey -Name "path"     -Value $extensionPath
-Set-ItemProperty -Path $extensionKey -Name "version"  -Value $version
-Set-ItemProperty -Path $extensionKey -Name "manifest" -Value "$extensionPath\manifest.json"
+New-Item -Path $extKey -Force | Out-Null
+Set-ItemProperty -Path $extKey -Name "update_url" -Value $updateUrl
 
 Write-Host ""
 Write-Host "🎉 Installation complete!" -ForegroundColor Green
-Write-Host "🔄 Please restart Chrome to activate the extension." -ForegroundColor Cyan
+Write-Host "🔄 Chromeを再起動すると拡張が自動的に有効化されます。" -ForegroundColor Cyan
