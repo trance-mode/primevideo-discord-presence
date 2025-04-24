@@ -71,10 +71,13 @@ primevideo-discord-presence/
 ├── native/                     # Rust ネイティブアプリ
 │   ├── src/main.rs
 │   ├── build.rs
-│   └── Cargo.toml
+│   ├── Cargo.toml
+│   ├── icon.ico
+│   └── icon.rc
 ├── installer/                  # Native Host 用スクリプト・マニフェスト
-│   ├── windows.ps1 / windows_uninstall.ps1
-│   └── resources/com.pvdp.discord.presence.json
+│   ├── windows.ps1
+│   ├── windows_uninstall.ps1
+│   └── com.pvdp.discord.presence.json
 ├── screenshots/                # スクリーンショット（任意）
 ├── .github/workflows/rust.yml  # GitHub Actions CI
 ├── README.md
