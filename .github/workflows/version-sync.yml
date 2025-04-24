@@ -1,33 +1,33 @@
-name: Sync Version
+name: Version Sync
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
+    paths:
+      - "Cargo.toml"
 
 jobs:
-  update-version:
+  sync-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Extract version from tag
-        id: version
-        run: |
-          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Extract version from Cargo.toml
+        id: cargo
+        run: echo "version=$(grep '^version =' Cargo.toml | sed 's/version = //' | tr -d '\"')" >> $GITHUB_OUTPUT
 
-      - name: Update manifest.json
+      - name: Update README.md badge
         run: |
-          jq ".version = \"${VERSION#v}\"" extension/manifest.json > temp.json && mv temp.json extension/manifest.json
+          sed -i -E "s|(https://img.shields.io/github/v/release/trance-mode/primevideo-discord-presence).*|\1?label=version%20%28latest%29&style=flat-square)|g" README.md
 
-      - name: Update windows.ps1
+      - name: Update installer version
         run: |
-          sed -i "s/Set-ItemProperty -Path \\\"\\\$extensionKey\\\" -Name \\\"version\\\".*$/Set-ItemProperty -Path \\\"\$extensionKey\\\" -Name \\\"version\\\" -Value \\\"${VERSION#v}\\\"/" installer/windows.ps1
+          sed -i -E "s/\$version = \"[0-9.]+\"/\$version = \"${{ steps.cargo.outputs.version }}\"/" installer/windows.ps1
 
-      - name: Commit changes
+      - name: Commit & push changes
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add extension/manifest.json installer/windows.ps1
-          git commit -m "🔄 Auto-update version to ${VERSION}" || echo "No changes"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "🔄 Sync version to ${{ steps.cargo.outputs.version }}"
           git push
