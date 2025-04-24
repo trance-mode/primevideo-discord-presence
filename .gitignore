@@ -39,3 +39,7 @@ installer/*.bak
 dist/
 build/
 .cache/
+
+# フォントファイルはバイナリに埋め込み済みのため除外
+native/fonts/*.ttf
+
