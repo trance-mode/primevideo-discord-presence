@@ -24,9 +24,7 @@ jobs:
 
       - name: 🛠️ Replace version in manifest.json, log.js, Cargo.toml
         run: |
-          VERSION="$VERSION"
           echo "Replacing version with $VERSION"
-
           # manifest.json の "version": "..."
           sed -i 's/"version": *"[0-9.]*"/"version": "'$VERSION'"/' extension/manifest.json
 
@@ -42,4 +40,4 @@ jobs:
           git config user.email "actions@github.com"
           git add extension/manifest.json extension/log.js native/Cargo.toml
           git commit -m "chore: sync version to manifest, log.js, Cargo.toml"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin HEAD:${GITHUB_REF_NAME} --force
