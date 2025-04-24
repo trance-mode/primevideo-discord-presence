@@ -1,4 +1,3 @@
-
 # Prime Video Discord Presence (PVDP)
 
 🎬 Amazon Prime Video の再生状況を Discord のステータスに表示する、**Chrome 拡張機能 + Rust ネイティブアプリ**です。
@@ -6,6 +5,7 @@
 *A Chrome Extension + Rust Native Host to display your Amazon Prime Video activity as a Discord Rich Presence status.*
 
 ![version](https://img.shields.io/github/v/release/trance-mode/primevideo-discord-presence)
+[![Download Installer](https://img.shields.io/badge/Download-pvdp__installer.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_installer.exe)
 
 ---
 
@@ -25,6 +25,10 @@
 ### ✅ 1. インストーラーをダウンロード
 
 最新の GitHub Release ページから [`pvdp_installer.exe`](https://github.com/trance-mode/primevideo-discord-presence/releases) をダウンロードしてください。
+
+または以下のバッジから直接ダウンロードできます：
+
+[![Download Installer](https://img.shields.io/badge/Download-pvdp__installer.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_installer.exe)
 
 ### ✅ 2. ダブルクリックして実行
 
@@ -50,14 +54,40 @@ Chrome の仕様により、拡張は初回インストール時に**自動で�
 
 ---
 
+## 🧹 アンインストール方法 / Uninstall
+
+### 🖱️ GUIアンインストーラーを使う（推奨）
+
+1. GitHub Releases から [`pvdp_uninstaller.exe`](https://github.com/trance-mode/primevideo-discord-presence/releases) をダウンロード
+2. **右クリック → 管理者として実行**
+3. GUIが表示されるので、表示ログを確認し「Close」ボタンで終了します
+
+実行後、以下が削除されます：
+- `C:\Program Files\primevideo-discord-presence`
+- `HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence`
+- `HKEY_CURRENT_USER\Software\Google\Chrome\Extensions\com.pvdp.discord.presence`
+
+---
+
+### 🛠 手動で削除する場合（上級者向け）
+
+```powershell
+Remove-Item -Path "C:\Program Files\primevideo-discord-presence" -Recurse -Force
+Remove-Item -Path "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence" -Force
+Remove-Item -Path "HKCU:\Software\Google\Chrome\Extensions\com.pvdp.discord.presence" -Force
+```
+
+---
+
 ## 📁 ディレクトリ構成（開発者向け）
 
 ```
 primevideo-discord-presence/
 ├── extension/                  # Chrome拡張
-├── native/                     # Rustネイティブ本体（pvdp, installer）
+├── native/                     # Rustネイティブ本体（pvdp, installer, uninstaller）
 │   ├── src/main.rs
 │   └── src/bin/pvdp_installer.rs
+│   └── src/bin/pvdp_uninstaller.rs
 ├── installer/                  # Native Host manifest
 │   └── com.pvdp.discord.presence.json
 ├── .github/workflows/          # GitHub Actions 定義
@@ -83,7 +113,7 @@ primevideo-discord-presence/
 このプロジェクトは以下を自動化しています：
 
 - タグ付き push → GitHub Release 自動作成
-- `pvdp.exe`, `pvdp_installer.exe` をビルドして添付
+- `pvdp.exe`, `pvdp_installer.exe`, `pvdp_uninstaller.exe` をビルドして添付
 - `manifest.json` / `log.js` / `Cargo.toml` のバージョン同期
 
 ---

@@ -47,7 +47,7 @@ async fn main() -> Result<()> {
 }
 
 fn spawn_tray() -> Result<()> {
-    let mut tray = TrayItem::new("PVDP", IconSource::Resource("icon"))?;
+    let mut tray = TrayItem::new("PVDP", IconSource::Resource("IDI_ICON1"))?;
     tray.add_menu_item("終了", || {
         tracing::info!(target: "prime_video_discord_presence", "🛑 トレイから終了");
         std::process::exit(0);
