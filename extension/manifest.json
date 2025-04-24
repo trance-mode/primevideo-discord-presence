@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Prime Video Discord Presence",
-  "version": "0.3.2",
+  "version": "0.3.4",
   "description": "Show what you're watching on Prime Video in your Discord status. (PVDP)",
   "permissions": ["nativeMessaging", "scripting", "tabs"],
   "host_permissions": [
