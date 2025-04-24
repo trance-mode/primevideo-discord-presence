@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "Prime Video Discord Presence",
+  "version": "1.4.0",
+  "description": "Show what you're watching on Prime Video in your Discord status. (PVDP)",
+  "permissions": ["nativeMessaging", "scripting", "tabs"],
+  "host_permissions": [
+    "*://www.amazon.co.jp/gp/video/detail/*",
+    "*://www.amazon.com/gp/video/detail/*",
+    "http://localhost:3012/"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.amazon.co.jp/gp/video/detail/*",
+        "*://www.amazon.com/gp/video/detail/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "popup.html",
+        "popup.css",
+        "popup.js",
+        "log.html",
+        "log.css",
+        "log.js",
+        "logCommon.js",
+        "icons/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none';"
+  }
+}

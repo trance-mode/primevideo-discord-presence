@@ -1,0 +1,40 @@
+# === Rust build artifacts ===
+/target/
+**/*.rs.bk
+**/*.swp
+Cargo.lock
+
+# === Visual Studio Code ===
+.vscode/
+
+# === Mac/Linux artifacts ===
+.DS_Store
+*.swp
+*.swo
+
+# === Windows artifacts ===
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# === Chrome extension artifacts ===
+*.crx
+*.pem
+*.zip
+*.log
+
+# === Node/npm (if used for tools or packaging) ===
+node_modules/
+package-lock.json
+npm-debug.log*
+
+# === Installer temp files (for testing) ===
+installer/*.exe
+installer/*.msi
+installer/*.tmp
+installer/*.bak
+
+# === Webpack / build tools cache (if used) ===
+dist/
+build/
+.cache/

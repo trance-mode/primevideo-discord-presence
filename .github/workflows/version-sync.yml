@@ -1,0 +1,33 @@
+name: Sync Version
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          echo "VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Update manifest.json
+        run: |
+          jq ".version = \"${VERSION#v}\"" extension/manifest.json > temp.json && mv temp.json extension/manifest.json
+
+      - name: Update windows.ps1
+        run: |
+          sed -i "s/Set-ItemProperty -Path \\\"\\\$extensionKey\\\" -Name \\\"version\\\".*$/Set-ItemProperty -Path \\\"\$extensionKey\\\" -Name \\\"version\\\" -Value \\\"${VERSION#v}\\\"/" installer/windows.ps1
+
+      - name: Commit changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add extension/manifest.json installer/windows.ps1
+          git commit -m "🔄 Auto-update version to ${VERSION}" || echo "No changes"
+          git push
