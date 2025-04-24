@@ -1,16 +1,17 @@
-use std::fs;
 use std::path::PathBuf;
 use eframe::egui;
 use fs_extra::dir::{copy as copy_dir, CopyOptions};
+use include_dir::{include_dir, Dir};
 use serde_json::Value;
 use winreg::enums::*;
 use winreg::RegKey;
-use webbrowser;
 
 #[link(name = "shell32")]
 extern "system" {
     fn IsUserAnAdmin() -> i32;
 }
+
+static EXT_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../extension");
 
 fn main() {
     let options = eframe::NativeOptions::default();
@@ -28,6 +29,7 @@ struct InstallerApp {
     failed: bool,
     error_message: Option<String>,
     checked_admin: bool,
+    show_chrome_button: bool,
 }
 
 impl eframe::App for InstallerApp {
@@ -48,7 +50,10 @@ impl eframe::App for InstallerApp {
 
             if self.logs.is_empty() && !self.finished && !self.failed {
                 match self.run_install() {
-                    Ok(_) => self.finished = true,
+                    Ok(_) => {
+                        self.finished = true;
+                        self.show_chrome_button = true;
+                    }
                     Err(e) => {
                         self.failed = true;
                         self.error_message = Some(format!("{:?}", e));
@@ -61,19 +66,20 @@ impl eframe::App for InstallerApp {
             }
 
             if self.finished {
-                ui.label("✅ Installation completed successfully.");
-                ui.label("To enable the extension, please open Chrome's extension page.");
-
-                if ui.button("Open Chrome Extensions Page").clicked() {
-                    let _ = webbrowser::open("chrome://extensions");
-                }
+                ui.label("Installation completed successfully.");
             }
 
             if self.failed {
-                ui.colored_label(egui::Color32::RED, "❌ Installation failed.");
+                ui.colored_label(egui::Color32::RED, "Installation failed.");
                 if let Some(err) = &self.error_message {
                     ui.label(err);
                 }
+            }
+
+            if self.show_chrome_button && ui.button("Open chrome://extensions").clicked() {
+                let _ = std::process::Command::new("cmd")
+                    .args(["/C", "start", "chrome", "chrome://extensions"])
+                    .spawn();
             }
 
             if self.finished || self.failed {
@@ -93,49 +99,54 @@ impl InstallerApp {
     fn run_install(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let exe_dir = std::env::current_exe()?.parent().unwrap().to_path_buf();
         let install_dir = PathBuf::from(r"C:\Program Files\primevideo-discord-presence");
-        let extension_dir = exe_dir.join("extension");
-        let manifest_path = extension_dir.join("manifest.json");
+        let native_manifest_path = install_dir.join("com.pvdp.discord.presence.json");
 
-        // === 1. Read version from manifest.json ===
-        self.log("Reading version...");
-        let manifest_text = fs::read_to_string(&manifest_path)?;
-        let manifest_json: Value = serde_json::from_str(&manifest_text)?;
+        self.log("Reading version information...");
+        let manifest_file = EXT_DIR.get_file("manifest.json").ok_or("manifest.json not found")?;
+        let manifest_json: Value = serde_json::from_slice(manifest_file.contents())?;
         let version = manifest_json["version"].as_str().unwrap_or("0.0.0");
 
-        // === 2. Copy files ===
         self.log("Removing previous installation...");
         if install_dir.exists() {
-            fs::remove_dir_all(&install_dir)?;
+            std::fs::remove_dir_all(&install_dir)?;
         }
 
-        self.log("Copying files...");
-        let mut opts = CopyOptions::new();
-        opts.overwrite = true;
-        opts.copy_inside = true;
-        fs::create_dir_all(&install_dir)?;
-        copy_dir(&extension_dir, &install_dir, &opts)?;
-        fs::copy(exe_dir.join("pvdp.exe"), install_dir.join("pvdp.exe"))?;
+        self.log("Copying embedded files...");
+        for entry in EXT_DIR.find("**/*").unwrap() {
+            if let Some(file) = entry.as_file() {
+                let rel_path = file.path();
+                let target_path = install_dir.join(rel_path);
+                if let Some(parent) = target_path.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                std::fs::write(&target_path, file.contents())?;
+            }
+        }
 
-        // === 3. Create NativeMessaging manifest dynamically ===
-        let nmh_json = format!(r#"{{
+        std::fs::copy(exe_dir.join("pvdp.exe"), install_dir.join("pvdp.exe"))?;
+
+        self.log("Generating NativeMessaging manifest...");
+        let manifest = format!(
+            r#"{{
     "name": "com.pvdp.discord.presence",
-    "description": "PVDP Native Messaging Host",
+    "description": "PVDP native messaging host",
     "path": "{}\\pvdp.exe",
     "type": "stdio",
-    "allowed_origins": ["chrome-extension://com.pvdp.discord.presence/"]
-}}"#, install_dir.display());
+    "allowed_origins": [
+        "chrome-extension://jpnegkohcfkhmnkikhcldjcghjjbnjfc/"
+    ]
+}}"#,
+            install_dir.display()
+        );
+        std::fs::write(&native_manifest_path, manifest)?;
 
-        fs::write(install_dir.join("com.pvdp.discord.presence.json"), nmh_json)?;
-
-        // === 4. Register NativeMessagingHost ===
         self.log("Registering NativeMessaging host...");
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         let (nmh_key, _) = hkcu.create_subkey(
             r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence"
         )?;
-        nmh_key.set_value("", &format!(r"{}\com.pvdp.discord.presence.json", install_dir.display()))?;
+        nmh_key.set_value("", &native_manifest_path.display().to_string())?;
 
-        // === 5. Register Chrome Extension ===
         self.log("Registering Chrome extension...");
         let (ext_key, _) = hkcu.create_subkey(
             r"Software\Google\Chrome\Extensions\com.pvdp.discord.presence"
@@ -144,7 +155,7 @@ impl InstallerApp {
         ext_key.set_value("version", &version)?;
         ext_key.set_value("manifest", &format!(r"{}\extension\manifest.json", install_dir.display()))?;
 
-        self.log("All tasks completed.");
+        self.log("All tasks completed successfully.");
         Ok(())
     }
 }
