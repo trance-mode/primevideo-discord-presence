@@ -32,8 +32,11 @@ jobs:
         run: npm install -g crx3
 
       - name: Decode CRX private key from secrets
+        shell: pwsh
         run: |
-          echo "${{ secrets.CRX_PRIVATE_KEY }}" | base64 -d > extension/key.pem
+          New-Item -ItemType Directory -Force -Path extension | Out-Null
+          $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.CRX_PRIVATE_KEY }}"))
+          Set-Content -Path "extension/key.pem" -Value $decoded
 
       - name: Create .crx file
         run: |
