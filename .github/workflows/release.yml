@@ -1,4 +1,4 @@
-name: Release with CRX
+name: Release
 
 on:
   push:
@@ -6,48 +6,31 @@ on:
       - "v*"
 
 jobs:
-  build-and-release:
+  release:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: 📥 Checkout
+        uses: actions/checkout@v3
 
-      - name: Install Rust
+      - name: 🦀 Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           override: true
 
-      - name: Build Rust binary
-        run: cargo build --release
-        working-directory: native
-
-      - name: Set up Node.js (for crx3)
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install crx3 tool
-        run: npm install -g crx3
-
-      - name: Decode CRX private key from secrets
-        shell: pwsh
+      - name: 📦 Build Rust binaries
         run: |
-          New-Item -ItemType Directory -Force -Path extension | Out-Null
-          $decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.CRX_PRIVATE_KEY }}"))
-          Set-Content -Path "extension/key.pem" -Value $decoded
+          cd native
+          cargo build --release --bin pvdp
+          cargo build --release --bin pvdp_installer
 
-      - name: Create .crx file
-        run: |
-          cd extension
-          crx3 --pack --key=key.pem --crx=../primevideo-discord-presence.crx
-
-      - name: Upload Release Artifacts
+      - name: 🚀 Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             native/target/release/pvdp.exe
-            primevideo-discord-presence.crx
+            native/target/release/pvdp_installer.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

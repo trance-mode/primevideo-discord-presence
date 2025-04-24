@@ -6,7 +6,7 @@ on:
       - "v*"
 
 permissions:
-  contents: write  # ✅ github-actions にファイルの push 権限を付与
+  contents: write
 
 jobs:
   update-version:
@@ -22,21 +22,24 @@ jobs:
         run: |
           echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
-      - name: 🛠️ Replace version in manifest.json and log.js
+      - name: 🛠️ Replace version in manifest.json, log.js, Cargo.toml
         run: |
           VERSION="$VERSION"
           echo "Replacing version with $VERSION"
 
-          # manifest.json の "version": "..." を置換
+          # manifest.json の "version": "..."
           sed -i 's/"version": *"[0-9.]*"/"version": "'$VERSION'"/' extension/manifest.json
 
-          # log.js の const VERSION = "..." を置換
+          # log.js の const VERSION = "..."
           sed -i 's/const VERSION = ".*"/const VERSION = "'$VERSION'"/' extension/log.js
+
+          # Cargo.toml の version = "..."
+          sed -i 's/^version = ".*"/version = "'$VERSION'"/' native/Cargo.toml
 
       - name: 📦 Commit updated files
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add extension/manifest.json extension/log.js
-          git commit -m "chore: sync version to manifest and log.js"
+          git add extension/manifest.json extension/log.js native/Cargo.toml
+          git commit -m "chore: sync version to manifest, log.js, Cargo.toml"
           git push origin HEAD:${GITHUB_REF_NAME}

@@ -1,3 +1,4 @@
+
 # Prime Video Discord Presence (PVDP)
 
 🎬 Amazon Prime Video の再生状況を Discord のステータスに表示する、**Chrome 拡張機能 + Rust ネイティブアプリ**です。
@@ -19,67 +20,47 @@
 
 ---
 
-## 🧩 インストール手順 / Installation
+## 🧩 インストール手順（Windows）
 
-### ✅ Windows（自動スクリプト）
+### ✅ 1. インストーラーをダウンロード
 
-PowerShell（管理者）で以下を実行：
+最新の GitHub Release ページから [`pvdp_installer.exe`](https://github.com/trance-mode/primevideo-discord-presence/releases) をダウンロードしてください。
 
-```powershell
-iwr "https://raw.githubusercontent.com/trance-mode/primevideo-discord-presence/main/installer/windows.ps1" | iex
-```
-📦 自動登録済：拡張機能は Chrome に自動追加されます（必要に応じて手動で有効化してください）。
+### ✅ 2. ダブルクリックして実行
 
----
+以下の処理が自動で行われます：
 
-## 🛠 手動インストール手順（開発者向け） / Installation
+- `C:\Program Files\primevideo-discord-presence\` に本体を展開
+- Chrome拡張をレジストリに登録
+- NativeMessaging用マニフェストを登録
 
-### 1. Chrome 拡張の読み込み
-
-1. `extension/` を Chrome の「パッケージ化されていない拡張機能」として読み込みます。
-
-### 2. Rust ネイティブアプリのビルド
-
-```sh
-cd native/
-cargo build --release
-```
-
-- ビルド後：`target/release/pvdp(.exe)` が生成されます。
-
-### 3. ネイティブホスト登録（Windows）
-
-```ps1
-powershell -ExecutionPolicy Bypass -File installer/windows.ps1
-```
-
-- `com.pvdp.discord.presence` をレジストリ登録して、拡張との接続を可能にします。
+> 💡 セキュリティ警告が表示された場合は「詳細情報」→「実行」を選択してください。
 
 ---
 
-## 📁 ディレクトリ構成 / Project Structure
+## 🖥 Chrome 拡張の有効化（初回のみ）
+
+Chrome の仕様により、拡張は初回インストール時に**自動では有効化されません**。以下の手順で有効化してください：
+
+1. `chrome://extensions` にアクセス
+2. 「Prime Video Discord Presence」が表示されていることを確認
+3. トグルをクリックして「有効」にします ✅
+
+> 🔐 一度有効化すれば、次回以降は自動で有効になります。
+
+---
+
+## 📁 ディレクトリ構成（開発者向け）
 
 ```
 primevideo-discord-presence/
-├── extension/                  # Chrome 拡張本体
-│   ├── manifest.json
-│   ├── background.js
-│   ├── content.js
-│   ├── popup.html / .js / .css
-│   ├── log.html / .js / .css
-│   └── logCommon.js
-├── native/                     # Rust ネイティブアプリ
+├── extension/                  # Chrome拡張
+├── native/                     # Rustネイティブ本体（pvdp, installer）
 │   ├── src/main.rs
-│   ├── build.rs
-│   ├── Cargo.toml
-│   ├── icon.ico
-│   └── icon.rc
-├── installer/                  # Native Host 用スクリプト・マニフェスト
-│   ├── windows.ps1
-│   ├── windows_uninstall.ps1
+│   └── src/bin/pvdp_installer.rs
+├── installer/                  # Native Host manifest
 │   └── com.pvdp.discord.presence.json
-├── screenshots/                # スクリーンショット（任意）
-├── .github/workflows/rust.yml  # GitHub Actions CI
+├── .github/workflows/          # GitHub Actions 定義
 ├── README.md
 └── LICENSE
 ```
@@ -97,16 +78,16 @@ primevideo-discord-presence/
 
 ---
 
-## 🧪 開発支援 / Dev Support
+## 🔄 自動化とCI/CD
 
-本リポジトリは GitHub Actions による CI を導入しています：
+このプロジェクトは以下を自動化しています：
 
-- `rust.yml`: Rust ネイティブアプリのビルド／テスト
-- `version-sync.yml`: Cargo.toml のバージョン → PowerShell スクリプトに自動反映
-- `release.yml`: タグ付き push 時に GitHub Release を自動作成（pvdp.exe を添付）
+- タグ付き push → GitHub Release 自動作成
+- `pvdp.exe`, `pvdp_installer.exe` をビルドして添付
+- `manifest.json` / `log.js` / `Cargo.toml` のバージョン同期
 
 ---
 
-## 📄 ライセンス / License
+## 📄 ライセンス
 
 MIT License. See `LICENSE` for details.
