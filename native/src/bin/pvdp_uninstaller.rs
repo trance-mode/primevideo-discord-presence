@@ -1,8 +1,8 @@
+// Self-contained pvdp_uninstaller.rs (English GUI)
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use eframe::egui;
-use winreg::enums::*;
-use winreg::RegKey;
+use winreg::{enums::*, RegKey};
 
 #[link(name = "shell32")]
 extern "system" {
@@ -58,11 +58,11 @@ impl eframe::App for UninstallerApp {
             }
 
             if self.finished {
-                ui.label("Uninstallation completed successfully.");
+                ui.label("✅ Uninstallation completed successfully.");
             }
 
             if self.failed {
-                ui.colored_label(egui::Color32::RED, "Uninstallation failed.");
+                ui.colored_label(egui::Color32::RED, "❌ Uninstallation failed.");
                 if let Some(err) = &self.error_message {
                     ui.label(err);
                 }
@@ -83,35 +83,22 @@ impl UninstallerApp {
     }
 
     fn run_uninstall(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let install_dir = PathBuf::from(r"C:\Program Files\primevideo-discord-presence");
+        let install_dir = Path::new(r"C:\Program Files\primevideo-discord-presence");
 
-        self.log("Removing installed files...");
+        self.log("Removing files...");
         if install_dir.exists() {
-            match fs::remove_dir_all(&install_dir) {
-                Ok(_) => self.log("Install directory removed."),
-                Err(e) => {
-                    self.log(&format!("Failed to remove install directory: {}", e));
-                    return Err(Box::new(e));
-                }
-            }
+            fs::remove_dir_all(install_dir)?;
         } else {
-            self.log("Install directory does not exist.");
+            self.log("Install directory not found.");
         }
 
-        self.log("Cleaning registry entries...");
+        self.log("Removing registry keys...");
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
-        match hkcu.delete_subkey_all(r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence") {
-            Ok(_) => self.log("NativeMessaging host key removed."),
-            Err(e) => self.log(&format!("Failed to delete NativeMessaging host key: {}", e)),
-        }
+        let _ = hkcu.delete_subkey_all(r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence");
+        let _ = hkcu.delete_subkey_all(r"Software\Google\Chrome\Extensions\com.pvdp.discord.presence");
 
-        match hkcu.delete_subkey_all(r"Software\Google\Chrome\Extensions\com.pvdp.discord.presence") {
-            Ok(_) => self.log("Chrome extension key removed."),
-            Err(e) => self.log(&format!("Failed to delete Chrome extension key: {}", e)),
-        }
-
-        self.log("Uninstall process finished.");
+        self.log("All cleanup tasks completed.");
         Ok(())
     }
 }
