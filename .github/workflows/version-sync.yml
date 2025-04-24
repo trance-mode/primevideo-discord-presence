@@ -1,33 +1,30 @@
-name: Version Sync
+name: Sync version to files
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "Cargo.toml"
+    tags:
+      - "v*"
 
 jobs:
-  sync-version:
+  update-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Extract version from Cargo.toml
-        id: cargo
-        run: echo "version=$(grep '^version =' Cargo.toml | sed 's/version = //' | tr -d '\"')" >> $GITHUB_OUTPUT
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
-      - name: Update README.md badge
+      - name: Update manifest.json and log.js
         run: |
-          sed -i -E "s|(https://img.shields.io/github/v/release/trance-mode/primevideo-discord-presence).*|\1?label=version%20%28latest%29&style=flat-square)|g" README.md
+          VERSION=$VERSION
+          jq --arg v "$VERSION" '.version = $v' extension/manifest.json > tmp && mv tmp extension/manifest.json
+          sed -i "s/versionElem.textContent = \".*\";/versionElem.textContent = \"v$VERSION\";/" extension/log.js
 
-      - name: Update installer version
+      - name: Commit updated files
         run: |
-          sed -i -E "s/\$version = \"[0-9.]+\"/\$version = \"${{ steps.cargo.outputs.version }}\"/" installer/windows.ps1
-
-      - name: Commit & push changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -am "🔄 Sync version to ${{ steps.cargo.outputs.version }}"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add extension/manifest.json extension/log.js
+          git commit -m "chore: sync version to manifest and log.js"
           git push

@@ -7,9 +7,21 @@ on:
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build Rust binary
+        run: cargo build --release
+        working-directory: native
 
       - name: Set up Node.js (for crx3)
         uses: actions/setup-node@v3
@@ -17,8 +29,7 @@ jobs:
           node-version: '18'
 
       - name: Install crx3 tool
-        run: |
-          npm install -g crx3
+        run: npm install -g crx3
 
       - name: Decode CRX private key from secrets
         run: |
