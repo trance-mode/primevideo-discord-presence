@@ -1,9 +1,0 @@
-﻿{
-  "name": "com.pvdp.discord.presence",
-  "description": "Prime Video Discord Presence Native Host",
-  "path": "PRIME_BINARY_PATH",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://__EXTENSION_ID__/"
-  ]
-}

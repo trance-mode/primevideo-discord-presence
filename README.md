@@ -6,6 +6,7 @@
 
 ![version](https://img.shields.io/github/v/release/trance-mode/primevideo-discord-presence)
 [![Download Installer](https://img.shields.io/badge/Download-pvdp__installer.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_installer.exe)
+[![Download Uninstaller](https://img.shields.io/badge/Download-pvdp__uninstaller.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_uninstaller.exe)
 
 ---
 
@@ -22,23 +23,17 @@
 
 ## 🧩 インストール手順（Windows）
 
-### ✅ 1. インストーラーをダウンロード
-
-最新の GitHub Release ページから [`pvdp_installer.exe`](https://github.com/trance-mode/primevideo-discord-presence/releases) をダウンロードしてください。
-
-または以下のバッジから直接ダウンロードできます：
+### ✅ 1. インストーラーをダウンロードして実行（管理者として）
 
 [![Download Installer](https://img.shields.io/badge/Download-pvdp__installer.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_installer.exe)
-
-### ✅ 2. ダブルクリックして実行
 
 以下の処理が自動で行われます：
 
 - `C:\Program Files\primevideo-discord-presence\` に本体を展開
 - Chrome拡張をレジストリに登録
-- NativeMessaging用マニフェストを登録
+- NativeMessaging用マニフェストを生成・登録
 
-> 💡 セキュリティ警告が表示された場合は「詳細情報」→「実行」を選択してください。
+> 💡 インストール完了後、`chrome://extensions` を自動で開くボタンも表示されます。
 
 ---
 
@@ -46,7 +41,7 @@
 
 Chrome の仕様により、拡張は初回インストール時に**自動では有効化されません**。以下の手順で有効化してください：
 
-1. `chrome://extensions` にアクセス
+1. `chrome://extensions` にアクセス（インストーラーでも開けます）
 2. 「Prime Video Discord Presence」が表示されていることを確認
 3. トグルをクリックして「有効」にします ✅
 
@@ -58,9 +53,10 @@ Chrome の仕様により、拡張は初回インストール時に**自動で�
 
 ### 🖱️ GUIアンインストーラーを使う（推奨）
 
-1. GitHub Releases から [`pvdp_uninstaller.exe`](https://github.com/trance-mode/primevideo-discord-presence/releases) をダウンロード
-2. **右クリック → 管理者として実行**
-3. GUIが表示されるので、表示ログを確認し「Close」ボタンで終了します
+[![Download Uninstaller](https://img.shields.io/badge/Download-pvdp__uninstaller.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_uninstaller.exe)
+
+1. ダウンロード後、**右クリック → 管理者として実行**
+2. GUIが表示されるので、ログを確認し「Close」ボタンで終了します
 
 実行後、以下が削除されます：
 - `C:\Program Files\primevideo-discord-presence`
@@ -83,13 +79,11 @@ Remove-Item -Path "HKCU:\Software\Google\Chrome\Extensions\com.pvdp.discord.pres
 
 ```
 primevideo-discord-presence/
-├── extension/                  # Chrome拡張
+├── extension/                  # Chrome拡張（build.rs で埋め込まれる）
 ├── native/                     # Rustネイティブ本体（pvdp, installer, uninstaller）
 │   ├── src/main.rs
 │   └── src/bin/pvdp_installer.rs
 │   └── src/bin/pvdp_uninstaller.rs
-├── installer/                  # Native Host manifest
-│   └── com.pvdp.discord.presence.json
 ├── .github/workflows/          # GitHub Actions 定義
 ├── README.md
 └── LICENSE
@@ -120,4 +114,4 @@ primevideo-discord-presence/
 
 ## 📄 ライセンス
 
-MIT License. See `LICENSE` for details.
+MIT License. See `LICENSE` for details。

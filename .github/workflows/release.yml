@@ -23,14 +23,14 @@ jobs:
           profile: minimal
           override: true
 
-      - name: 📦 Build Rust binaries
+      - name: 📦 Build Binaries
         run: |
           cd native
           cargo build --release --bin pvdp
           cargo build --release --bin pvdp_installer
           cargo build --release --bin pvdp_uninstaller
 
-      - name: 🚀 Upload binaries to GitHub Release
+      - name: 🚀 Upload to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
