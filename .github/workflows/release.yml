@@ -28,6 +28,7 @@ jobs:
           cd native
           cargo build --release --bin pvdp
           cargo build --release --bin pvdp_installer
+          cargo build --release --bin pvdp_uninstaller
 
       - name: 🚀 Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
@@ -35,5 +36,6 @@ jobs:
           files: |
             native/target/release/pvdp.exe
             native/target/release/pvdp_installer.exe
+            native/target/release/pvdp_uninstaller.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
