@@ -1,0 +1,65 @@
+body {
+    font-family: "Segoe UI", sans-serif;
+    font-size: 13px;
+    margin: 0;
+    padding: 0;
+    background: #111;
+    color: #eee;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  #header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: #222;
+    border-bottom: 1px solid #333;
+    font-weight: bold;
+  }
+  
+  #version {
+    font-size: 11px;
+    color: #888;
+  }
+  
+  #status-container {
+    padding: 4px 10px;
+  }
+  
+  .status-indicator {
+    font-weight: bold;
+    color: #ff0;
+  }
+  
+  .status-ok    { color: #0f0; }
+  .status-error { color: #f44; }
+  .status-warn  { color: #ff0; }
+  
+  #log-container {
+    flex: 1;
+    overflow-y: auto;
+    background: #000;
+    padding: 8px 10px;
+  }
+  
+  #log {
+    display: flex;
+    flex-direction: column;
+    font-family: monospace;
+    font-size: 12px;
+  }
+  
+  #log div {
+    margin-bottom: 2px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  
+  .log-debug { color: #88f; }
+  .log-info  { color: #ccc; }
+  .log-warn  { color: #ff0; }
+  .log-error { color: #f44; }
+  
