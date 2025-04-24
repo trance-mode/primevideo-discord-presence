@@ -4,7 +4,7 @@
 
 *A Chrome Extension + Rust Native Host to display your Amazon Prime Video activity as a Discord Rich Presence status.*
 
-![version](https://img.shields.io/badge/version-v1.4.0-blue)
+![version](https://img.shields.io/github/v/release/trance-mode/primevideo-discord-presence)
 
 ---
 
@@ -96,8 +96,11 @@ primevideo-discord-presence/
 
 ## 🧪 開発支援 / Dev Support
 
-GitHub Actions による Rust ビルド/テスト:
-`.github/workflows/rust.yml`
+本リポジトリは GitHub Actions による CI を導入しています：
+
+- `rust.yml`: Rust ネイティブアプリのビルド／テスト
+- `version-sync.yml`: Cargo.toml のバージョン → PowerShell スクリプトに自動反映
+- `release.yml`: タグ付き push 時に GitHub Release を自動作成（pvdp.exe を添付）
 
 ---
 

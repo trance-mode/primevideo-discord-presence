@@ -1,3 +1,5 @@
+# windows_uninstall.ps1 - PrimeVideo Discord Presence アンインストーラー
+
 Write-Host "🧹 Uninstalling PrimeVideo Discord Presence..." -ForegroundColor Cyan
 
 # 拡張機能のレジストリキーを削除

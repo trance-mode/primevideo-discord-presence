@@ -5,7 +5,7 @@ const statusElem = document.getElementById("status");
 const logElem    = document.getElementById("log");
 const versionElem = document.getElementById("version");
 
-versionElem.textContent = "v1.4.0";
+versionElem.textContent = `v${chrome.runtime.getManifest().version}`;
 
 document.getElementById("open-log").addEventListener("click", () => {
   window.open(chrome.runtime.getURL("log.html"), "_blank");
