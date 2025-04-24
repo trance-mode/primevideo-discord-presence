@@ -1,11 +1,18 @@
 # windows.ps1 - PrimeVideo Discord Presence インストーラー（v1.4.0+ / CI対応）
 
+# 🚨 管理者権限チェック
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)) {
+    Write-Host "🔐 管理者として再実行します..." -ForegroundColor Cyan
+    Start-Process powershell "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    exit
+}
+
 Write-Host "📦 Installing PrimeVideo Discord Presence..." -ForegroundColor Cyan
 
 # バージョンは GitHub Actions CI により自動反映されます
 $version = "1.4.0"
 
-$repoRoot = "$env:TEMP\primevideo-discord-presence"
+$repoRoot = "C:\Program Files\PrimeVideo Discord Presence"
 $zipUrl   = "https://github.com/trance-mode/primevideo-discord-presence/archive/refs/heads/main.zip"
 $zipPath  = "$env:TEMP\pvdp.zip"
 
