@@ -3,6 +3,13 @@ name    = "pvdp"
 version = "0.3.4"
 edition = "2021"
 build = "build.rs"
+include = [
+  "fonts/NotoSansJP-Regular.ttf",  # ✅ ビルドに含める
+  "src/**",
+  "Cargo.toml",
+  "Cargo.lock",
+  "build.rs"
+]
 
 [dependencies]
 anyhow              = "1"
