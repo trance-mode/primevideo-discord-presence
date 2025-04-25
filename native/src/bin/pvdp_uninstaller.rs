@@ -1,3 +1,5 @@
+// === src/bin/pvdp_uninstaller.rs ===
+
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -117,6 +119,7 @@ impl UninstallerApp {
 
     fn run_uninstall(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let install_dir = PathBuf::from(r"C:\Program Files\primevideo-discord-presence");
+        let extension_id = "hjngoljbakohoejlcikpfgfmcdjhgppe";
 
         self.log("🔎 pvdp.exe の実行状態を確認中...");
         let output = Command::new("cmd")
@@ -125,12 +128,8 @@ impl UninstallerApp {
 
         let output_str = String::from_utf8_lossy(&output.stdout);
 
-        if output_str
-            .lines()
-            .any(|line| line.to_lowercase().starts_with("pvdp.exe"))
-        {
+        if output_str.lines().any(|line| line.to_lowercase().contains("pvdp.exe")) {
             self.log("⚠️ pvdp.exe が起動中です。終了処理を試みます...");
-
             let kill = Command::new("cmd")
                 .args(["/C", "taskkill /F /IM pvdp.exe"])
                 .output()?;
@@ -160,8 +159,8 @@ impl UninstallerApp {
 
         self.log("🪟 レジストリキーを削除中...");
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-        let _ = hkcu.delete_subkey(r"Software\\Google\\Chrome\\NativeMessagingHosts\\com.pvdp.discord.presence");
-        let _ = hkcu.delete_subkey(r"Software\\Google\\Chrome\\Extensions\\com.pvdp.discord.presence");
+        let _ = hkcu.delete_subkey(r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence");
+        let _ = hkcu.delete_subkey(&format!("Software\\Google\\Chrome\\Extensions\\{}", extension_id));
         self.log("✔️ レジストリ削除完了");
 
         self.log("🎉 アンインストール完了！");
