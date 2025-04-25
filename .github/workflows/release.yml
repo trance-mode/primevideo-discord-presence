@@ -1,69 +1,61 @@
-name: Release and Auto Version Bump
+name: Release
 
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
-  release:
+  build:
     runs-on: windows-latest
 
-    env:
-      EXT_MANIFEST: native/extension/manifest.json
-      EXT_LOG: native/extension/log.js
-      CARGO_FILE: native/Cargo.toml
-
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v3
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
 
-      - name: 🧮 Extract version from tag
-        run: echo "NEW_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+      - name: 🦀 Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: 🧾 Download Japanese font
+      - name: 🧱 Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: 🏷 バージョン取得 (Cargo.toml)
+        id: version
+        shell: pwsh
         run: |
-          mkdir native/fonts
-          curl -L -o native/fonts/NotoSansJP-Regular.ttf https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/Japanese/NotoSansJP-Regular.otf
-
-      - name: 📝 Update version in manifest.json
-        run: |
-          sed -i "s/\"version\": \".*\"/\"version\": \"${{ env.NEW_VERSION }}\"/" "${{ env.EXT_MANIFEST }}"
-
-      - name: 📝 Update version in log.js
-        run: |
-          if (Test-Path "${{ env.EXT_LOG }}") {
-            (Get-Content "${{ env.EXT_LOG }}" -Raw) -replace "const VERSION = '.*'", "const VERSION = '${{ env.NEW_VERSION }}'" | Set-Content "${{ env.EXT_LOG }}"
+          $version = Select-String -Path Cargo.toml -Pattern '^version *= *"(.+)"' | ForEach-Object {
+            ($_ -split '"')[1]
           }
+          echo "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      - name: 📝 Update version in Cargo.toml
+      - name: ✏️ manifest.json の version を更新
+        shell: pwsh
         run: |
-          sed -i "s/^version = \".*\"/version = \"${{ env.NEW_VERSION }}\"/" "${{ env.CARGO_FILE }}"
+          $ver = "${{ steps.version.outputs.version }}"
+          (Get-Content native/extension/manifest.json -Raw) -replace '"version": *".+?"', '"version": "' + $ver + '"' |
+            Set-Content native/extension/manifest.json -Encoding UTF8
 
-      - name: ✅ Commit version bump
+      - name: ✏️ README.md のバージョンバッジを更新
+        shell: pwsh
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add ${{ env.EXT_MANIFEST }} ${{ env.EXT_LOG }} ${{ env.CARGO_FILE }} || true
-          git commit -m "chore: bump version to ${{ env.NEW_VERSION }}" || echo "no changes"
-          git push origin HEAD:main
+          $ver = "${{ steps.version.outputs.version }}"
+          (Get-Content README.md -Raw) -replace 'version-v[\\d\\.]+-blue', 'version-v' + $ver + '-blue' |
+            Set-Content README.md -Encoding UTF8
 
-      - name: 🛠 Build release
-        run: cargo build --release
+      - name: 🔨 ビルド（pvdp, installer, uninstaller）
+        run: cargo build --release --bin pvdp --bin pvdp_installer --bin pvdp_uninstaller
 
-      - name: 📦 Zip files
-        run: |
-          mkdir upload
-          copy target/release/pvdp.exe upload/
-          copy target/release/pvdp_installer.exe upload/
-          copy target/release/pvdp_uninstaller.exe upload/
-          Compress-Archive -Path upload/* -DestinationPath pvdp-${{ env.NEW_VERSION }}.zip
-
-      - name: 🚀 Release to GitHub
-        uses: softprops/action-gh-release@v1
+      - name: 🚀 リリース作成＆ファイルアップロード
+        uses: softprops/action-gh-release@v2
         with:
           files: |
-            target/release/pvdp.exe
             target/release/pvdp_installer.exe
             target/release/pvdp_uninstaller.exe
-            pvdp-${{ env.NEW_VERSION }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
