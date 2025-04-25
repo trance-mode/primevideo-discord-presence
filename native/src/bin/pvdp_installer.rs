@@ -1,34 +1,48 @@
 use std::path::PathBuf;
-use eframe::egui;
-use fs_extra::dir::{copy as copy_dir, CopyOptions};
+use eframe::egui::{self, FontData, FontDefinitions, FontFamily};
 use include_dir::{include_dir, Dir};
 use serde_json::Value;
-use winreg::{enums::*, RegKey};
+use winreg::enums::*;
+use winreg::RegKey;
+use eframe::egui::ViewportBuilder;
 
 #[link(name = "shell32")]
 extern "system" {
     fn IsUserAnAdmin() -> i32;
 }
 
-// ← bin から見て ../../extension が正しい
-static EXT_DIR: Dir = include_dir!("../../extension");
+static EXT_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/extension");
 
 fn main() {
-    let options = eframe::NativeOptions::default();
+    // アイコンを設定したい場合は以下を有効化
+    // let icon_bytes = include_bytes!("../../assets/pvdp.ico");
+    // let icon = Some(eframe::icon_data::from_ico(icon_bytes).expect("ICO読み込み失敗"));
+
+    let options = eframe::NativeOptions {
+        viewport: ViewportBuilder::default().with_inner_size([480.0, 500.0]),
+        // icon_data: icon,
+        ..Default::default()
+    };
+
     let _ = eframe::run_native(
         "PVDP Installer",
         options,
         Box::new(|cc| {
-            // 日本語フォントを設定
-            let mut fonts = egui::FontDefinitions::default();
+            let mut fonts = FontDefinitions::default();
             fonts.font_data.insert(
                 "jp".to_string(),
-                egui::FontData::from_static(include_bytes!("../../fonts/NotoSansJP-Regular.ttf")),
+                FontData::from_static(include_bytes!("../../fonts/NotoSansJP-Regular.ttf")),
             );
-            fonts.families
-                .get_mut(&egui::FontFamily::Proportional)
-                .unwrap()
+            fonts
+                .families
+                .entry(FontFamily::Proportional)
+                .or_default()
                 .insert(0, "jp".to_string());
+            fonts
+                .families
+                .entry(FontFamily::Monospace)
+                .or_default()
+                .push("jp".to_string());
             cc.egui_ctx.set_fonts(fonts);
 
             Box::new(InstallerApp::default())
@@ -56,7 +70,12 @@ impl eframe::App for InstallerApp {
                 unsafe {
                     if IsUserAnAdmin() == 0 {
                         self.failed = true;
-                        self.error_message = Some("❌ 管理者として実行してください。".to_string());
+                        self.error_message = Some(concat!(
+                            "❌ 管理者として実行してください。\n\n",
+                            "▶ 方法：\n",
+                            " - インストーラーを右クリック →『管理者として実行』を選択\n",
+                            " - または、Shift + 右クリック →『管理者として実行』"
+                        ).to_string());
                     }
                 }
                 self.checked_admin = true;
@@ -70,7 +89,7 @@ impl eframe::App for InstallerApp {
                     }
                     Err(e) => {
                         self.failed = true;
-                        self.error_message = Some(format!("⚠️ {}", e));
+                        self.error_message = Some(format!("⚠️ エラー: {}", e));
                     }
                 }
             }
@@ -80,17 +99,17 @@ impl eframe::App for InstallerApp {
             }
 
             if self.finished {
-                ui.colored_label(egui::Color32::GREEN, "✅ インストール完了");
+                ui.colored_label(egui::Color32::GREEN, "✅ インストール完了！");
             }
 
             if self.failed {
-                ui.colored_label(egui::Color32::RED, "❌ インストール失敗");
+                ui.colored_label(egui::Color32::RED, "❌ インストールに失敗しました！");
                 if let Some(err) = &self.error_message {
                     ui.label(err);
                 }
             }
 
-            if self.show_chrome_button && ui.button("🌐 chrome://extensions を開く").clicked() {
+            if self.show_chrome_button && ui.button("🧩 拡張機能ページを開く").clicked() {
                 let _ = std::process::Command::new("cmd")
                     .args(["/C", "start", "chrome", "chrome://extensions"])
                     .spawn();
@@ -106,8 +125,8 @@ impl eframe::App for InstallerApp {
 }
 
 impl InstallerApp {
-    fn log(&mut self, message: &str) {
-        self.logs.push(format!("🔹 {}", message));
+    fn log(&mut self, msg: &str) {
+        self.logs.push(format!("🔸 {}", msg));
     }
 
     fn run_install(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -115,17 +134,17 @@ impl InstallerApp {
         let install_dir = PathBuf::from(r"C:\Program Files\primevideo-discord-presence");
         let native_manifest_path = install_dir.join("com.pvdp.discord.presence.json");
 
-        self.log("📖 バージョン情報読み込み中...");
+        self.log("📖 バージョン情報を読み込み中...");
         let manifest_file = EXT_DIR.get_file("manifest.json").ok_or("manifest.json が見つかりません")?;
         let manifest_json: Value = serde_json::from_slice(manifest_file.contents())?;
         let version = manifest_json["version"].as_str().unwrap_or("0.0.0");
 
-        self.log("🧹 旧バージョンを削除中...");
+        self.log("🧹 前のインストールを削除中...");
         if install_dir.exists() {
             std::fs::remove_dir_all(&install_dir)?;
         }
 
-        self.log("📂 ディレクトリ作成...");
+        self.log("📂 インストールディレクトリ作成中...");
         std::fs::create_dir_all(&install_dir)?;
 
         self.log("📦 拡張機能ファイルをコピー中...");
@@ -139,10 +158,10 @@ impl InstallerApp {
             self.log(&format!("✔️ {}", rel_path.display()));
         }
 
-        self.log("📦 pvdp.exe をコピー中...");
+        self.log("📄 pvdp.exe をコピー中...");
         std::fs::copy(exe_dir.join("pvdp.exe"), install_dir.join("pvdp.exe"))?;
 
-        self.log("🧾 NativeMessaging マニフェスト生成...");
+        self.log("🧾 NativeMessaging マニフェストを生成中...");
         let manifest = format!(
             r#"{{
     "name": "com.pvdp.discord.presence",
@@ -157,14 +176,13 @@ impl InstallerApp {
         );
         std::fs::write(&native_manifest_path, manifest)?;
 
-        self.log("🧠 レジストリに NativeMessagingHost 登録...");
+        self.log("📝 レジストリへ登録中...");
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         let (nmh_key, _) = hkcu.create_subkey(
             r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence"
         )?;
         nmh_key.set_value("", &native_manifest_path.display().to_string())?;
 
-        self.log("🧠 Chrome 拡張のレジストリ登録...");
         let (ext_key, _) = hkcu.create_subkey(
             r"Software\Google\Chrome\Extensions\com.pvdp.discord.presence"
         )?;
@@ -172,7 +190,7 @@ impl InstallerApp {
         ext_key.set_value("version", &version)?;
         ext_key.set_value("manifest", &format!(r"{}\extension\manifest.json", install_dir.display()))?;
 
-        self.log("🎉 すべて完了しました！");
+        self.log("🎉 インストール完了！");
         Ok(())
     }
 }
