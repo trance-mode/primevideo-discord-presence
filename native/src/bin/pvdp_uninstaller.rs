@@ -91,7 +91,7 @@ impl eframe::App for UninstallerApp {
             }
 
             if self.finished {
-                ui.colored_label(egui::Color32::GREEN, "✅ アンインストールが完了しました！");
+                ui.colored_label(egui::Color32::GREEN, "✅ アンインストール完了！");
             }
 
             if self.failed {
@@ -122,8 +122,13 @@ impl UninstallerApp {
         let output = Command::new("cmd")
             .args(["/C", "tasklist /FI \"IMAGENAME eq pvdp.exe\""])
             .output()?;
+
         let output_str = String::from_utf8_lossy(&output.stdout);
-        if output_str.contains("pvdp.exe") {
+
+        if output_str
+            .lines()
+            .any(|line| line.to_lowercase().starts_with("pvdp.exe"))
+        {
             self.log("⚠️ pvdp.exe が起動中です。終了処理を試みます...");
 
             let kill = Command::new("cmd")
@@ -131,11 +136,15 @@ impl UninstallerApp {
                 .output()?;
 
             if kill.status.success() {
-                self.log("🛑 pvdp.exe を正常に終了しました。");
+                self.log("🛑 pvdp.exe を正常に終了しました");
             } else {
+                let stderr = String::from_utf8_lossy(&kill.stderr);
                 self.failed = true;
-                self.error_message = Some("❌ pvdp.exe が実行中のためアンインストールできません。\n手動で終了してから再試行してください。".to_string());
-                return Ok(()); // 警告表示だけして中断
+                self.error_message = Some(format!(
+                    "❌ pvdp.exe の終了に失敗しました。\n{}\n手動で終了してから再実行してください。",
+                    stderr
+                ));
+                return Ok(());
             }
         } else {
             self.log("✅ pvdp.exe は起動していません。");
@@ -151,11 +160,9 @@ impl UninstallerApp {
 
         self.log("🪟 レジストリキーを削除中...");
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-        let _ = hkcu.delete_subkey(r"Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence");
-        self.log("✔️ NativeMessagingHost レジストリ削除");
-
-        let _ = hkcu.delete_subkey(r"Software\Google\Chrome\Extensions\com.pvdp.discord.presence");
-        self.log("✔️ Extension レジストリ削除");
+        let _ = hkcu.delete_subkey(r"Software\\Google\\Chrome\\NativeMessagingHosts\\com.pvdp.discord.presence");
+        let _ = hkcu.delete_subkey(r"Software\\Google\\Chrome\\Extensions\\com.pvdp.discord.presence");
+        self.log("✔️ レジストリ削除完了");
 
         self.log("🎉 アンインストール完了！");
         Ok(())

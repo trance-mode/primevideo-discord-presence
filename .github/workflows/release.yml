@@ -1,41 +1,69 @@
-name: Release
+name: Release and Auto Version Bump
 
 on:
   push:
     tags:
-      - "v*"
-
-permissions:
-  contents: write
+      - 'v*'
 
 jobs:
   release:
     runs-on: windows-latest
 
+    env:
+      EXT_MANIFEST: native/extension/manifest.json
+      EXT_LOG: native/extension/log.js
+      CARGO_FILE: native/Cargo.toml
+
     steps:
-      - name: 📥 Checkout
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      - name: 🦀 Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
+      - name: 🧮 Extract version from tag
+        run: echo "NEW_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
-      - name: 📦 Build Rust binaries
+      - name: 🧾 Download Japanese font
         run: |
-          cd native
-          cargo build --release --bin pvdp
-          cargo build --release --bin pvdp_installer
-          cargo build --release --bin pvdp_uninstaller
+          mkdir native/fonts
+          curl -L -o native/fonts/NotoSansJP-Regular.ttf https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/Japanese/NotoSansJP-Regular.otf
 
-      - name: 🚀 Upload binaries to GitHub Release
+      - name: 📝 Update version in manifest.json
+        run: |
+          sed -i "s/\"version\": \".*\"/\"version\": \"${{ env.NEW_VERSION }}\"/" "${{ env.EXT_MANIFEST }}"
+
+      - name: 📝 Update version in log.js
+        run: |
+          if (Test-Path "${{ env.EXT_LOG }}") {
+            (Get-Content "${{ env.EXT_LOG }}" -Raw) -replace "const VERSION = '.*'", "const VERSION = '${{ env.NEW_VERSION }}'" | Set-Content "${{ env.EXT_LOG }}"
+          }
+
+      - name: 📝 Update version in Cargo.toml
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ env.NEW_VERSION }}\"/" "${{ env.CARGO_FILE }}"
+
+      - name: ✅ Commit version bump
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add ${{ env.EXT_MANIFEST }} ${{ env.EXT_LOG }} ${{ env.CARGO_FILE }} || true
+          git commit -m "chore: bump version to ${{ env.NEW_VERSION }}" || echo "no changes"
+          git push origin HEAD:main
+
+      - name: 🛠 Build release
+        run: cargo build --release
+
+      - name: 📦 Zip files
+        run: |
+          mkdir upload
+          copy target/release/pvdp.exe upload/
+          copy target/release/pvdp_installer.exe upload/
+          copy target/release/pvdp_uninstaller.exe upload/
+          Compress-Archive -Path upload/* -DestinationPath pvdp-${{ env.NEW_VERSION }}.zip
+
+      - name: 🚀 Release to GitHub
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            native/target/release/pvdp.exe
-            native/target/release/pvdp_installer.exe
-            native/target/release/pvdp_uninstaller.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            target/release/pvdp.exe
+            target/release/pvdp_installer.exe
+            target/release/pvdp_uninstaller.exe
+            pvdp-${{ env.NEW_VERSION }}.zip

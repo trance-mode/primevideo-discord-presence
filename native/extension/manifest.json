@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Prime Video Discord Presence",
+  "name": "com.pvdp.discord.presence",
+  "short_name": "PVDP",
   "version": "0.3.4",
   "description": "Show what you're watching on Prime Video in your Discord status. (PVDP)",
   "permissions": ["nativeMessaging", "scripting", "tabs"],
@@ -50,6 +51,11 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "externally_connectable": {
+    "ids": ["hjngoljbakohoejlcikpfgfmcdjhgppe"],
+    "matches": ["*://*/*"]
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwihWxgACZeVy0qK7VkK2oqfV7lmAImgz24PDDm/oXZhagQQUV+HHadAHtyP+YPiQjSWGS8Yk+JKbIZd0zYzEYsHA7ZurMsLe44LYEWQK8sxHMHyaQWG1zSoCBkweVtbuF/A7YmtQ51QTJPQDt00ODum3ujwthao+2jxLEYrIvts0oy9GFjkOqKGP+qZVn6ZaGcgjN1NB8BqWSl7RIOLMsBn2Tvqdf/Y8ePKoZ25GX4DhvUeMXIaWs0gU5hzFAO15QZU2m/qhG6uzlPBw3uQC5l7eJ7jvEsAURfqOPPSVsr5pC01oLUAAYBhCh9cLczWZhnFBfR0jB7bvmfCB50cWdQIDAQAB",
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none';"
   }
