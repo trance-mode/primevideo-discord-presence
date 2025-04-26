@@ -78,9 +78,9 @@
 ## ⚙ 開発者向け
 
 1. ポップアップに固定した拡張機能を押すことでログが確認できます。
-<img src="https://github.com/user-attachments/assets/de21e46a-fe7a-4213-b050-cf8892a2e5ed" width="250" />
+   <img src="https://github.com/user-attachments/assets/de21e46a-fe7a-4213-b050-cf8892a2e5ed" width="250" />
 2. ログを別ウィンドウで見るボタンを押すことで別ウィンドウで確認することも出来ます。
-<img src="https://github.com/user-attachments/assets/e76c1068-6757-4d98-a5c9-6a5012938735" width="500" />
+   <img src="https://github.com/user-attachments/assets/e76c1068-6757-4d98-a5c9-6a5012938735" width="500" />
 
 ---
 
