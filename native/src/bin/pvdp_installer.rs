@@ -3,7 +3,6 @@
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
-use std::io::ErrorKind;
 use eframe::{egui, NativeOptions};
 use egui::{FontData, FontDefinitions, FontFamily, ViewportBuilder};
 use include_dir::{include_dir, Dir};
@@ -13,17 +12,23 @@ extern "system" {
     fn IsUserAnAdmin() -> i32;
 }
 
+// ✅ Cargo.tomlのversionから自動取得
+const PVDP_VERSION: &str = concat!("v", env!("CARGO_PKG_VERSION"));
+
+// ✅ pvdp.exeバイナリを埋め込み
 const PVDP_EXE_BYTES: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/target/release/pvdp.exe"));
+// ✅ extension/ディレクトリを埋め込み
 const EXTENSION_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/extension");
 
 fn main() {
     let options = NativeOptions {
-        viewport: ViewportBuilder::default().with_inner_size([480.0, 460.0]),
+        viewport: ViewportBuilder::default()
+            .with_inner_size([480.0, 600.0]), // ✅ 高さ600pxに拡大
         ..Default::default()
     };
 
     let _ = eframe::run_native(
-        "PVDP Installer",
+        "🐿️ PVDP Installer",
         options,
         Box::new(|cc| {
             let mut fonts = FontDefinitions::default();
@@ -65,6 +70,7 @@ impl eframe::App for InstallerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("🐿️ PVDP インストーラー");
+            ui.label(format!("バージョン {}", PVDP_VERSION));
             ui.separator();
 
             if !self.checked_admin {
@@ -83,10 +89,11 @@ impl eframe::App for InstallerApp {
             }
 
             if !self.failed && !self.finished && self.logs.is_empty() && !self.already_installed {
-                let install_dir = PathBuf::from(r"C:\Program Files\primevideo-discord-presence");
-                if install_dir.exists() {
+                if Self::install_dir().exists() {
                     self.already_installed = true;
-                    self.error_message = Some("⚠️ すでにインストールされています。アンインストール後に再度お試しください。".to_string());
+                    self.error_message = Some(
+                        "⚠️ すでにインストールされています。アンインストール後に再度お試しください。".to_string()
+                    );
                 }
             }
 
@@ -113,10 +120,17 @@ impl eframe::App for InstallerApp {
 
             if self.finished {
                 ui.colored_label(egui::Color32::GREEN, "✅ インストール完了！");
-                if ui.button("🌐 Chrome の拡張ページを開く").clicked() {
-                    let _ = Command::new("cmd")
-                        .args(["/C", r#"start "" "chrome.exe" --profile-directory=Default chrome://extensions"#])
-                        .spawn();
+                ui.label("🌟 Chromeが起動しました！");
+                ui.label("🌟 Chromeのアドレスバーに「chrome://extensions」と入力して拡張機能ページを開いてください！");
+                ui.separator();
+                ui.label("✋ 手動追加方法 ✋");
+                ui.label("1. 右上の「開発者モード」をオンにします");
+                ui.label("2. 「パッケージ化されていない拡張機能を読み込む」を押します");
+                ui.label("3. インストーラーが開いた extension フォルダを選択してください！");
+                ui.label("追加完了後プライム動画を再生するとプレゼンスが表示されます");
+
+                if ui.button("🌐 Chromeを開く & extensionフォルダを開く").clicked() {
+                    InstallerApp::open_chrome_and_extension_folder(self);
                 }
             }
 
@@ -141,8 +155,30 @@ impl InstallerApp {
         self.logs.push(format!("🔸 {}", msg));
     }
 
+    fn install_dir() -> PathBuf {
+        PathBuf::from(r"C:\Program Files\primevideo-discord-presence")
+    }
+
+    fn open_chrome_and_extension_folder(&mut self) {
+        // Chromeを起動
+        let _ = Command::new("cmd")
+            .args(["/C", "start", "chrome"])
+            .spawn();
+
+        // インストールフォルダを開く
+        let install_dir = Self::install_dir();
+        if install_dir.exists() {
+            let _ = Command::new("explorer")
+                .arg(install_dir)
+                .spawn();
+        } else {
+            self.log("⚠️ インストールフォルダが見つかりませんでした。");
+        }
+    }
+
     fn run_install(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let install_dir = PathBuf::from(r"C:\Program Files\primevideo-discord-presence");
+        let install_dir = Self::install_dir();
+        let extension_id = "hjngoljbakohoejlcikpfgfmcdjhgppe";
 
         self.log("🧹 前のインストールを削除中...");
         if install_dir.exists() {
@@ -160,44 +196,28 @@ impl InstallerApp {
 
         self.log("📦 拡張機能ファイルを展開中...");
         let ext_dir = install_dir.join("extension");
-        self.log(&format!("📁 拡張機能展開先: {}", ext_dir.display()));
         fs::create_dir_all(&ext_dir)?;
-        EXTENSION_DIR.extract(&ext_dir)?;
+        EXTENSION_DIR.extract(&ext_dir)
+            .map_err(|e| format!("拡張機能展開失敗: {}", e))?;
+        self.log(&format!("📁 拡張機能展開先: \"{}\"", ext_dir.display()));
         self.log("✅ 拡張機能ファイル展開完了");
 
-        self.log("🔐 拡張機能フォルダのアクセス許可を修正中...");
-        let acl = Command::new("icacls")
-            .args([ext_dir.to_str().unwrap(), "/grant", "Users:(OI)(CI)(RX)"])
-            .output()?;
-        if acl.status.success() {
-            self.log("✅ アクセス許可を Users に付与");
-        } else {
-            let stderr = String::from_utf8_lossy(&acl.stderr);
-            return Err(format!("❌ アクセス許可の付与に失敗: {}", stderr).into());
-        }
-
-        let extension_id = "hjngoljbakohoejlcikpfgfmcdjhgppe";
-
         self.log("📄 NativeMessaging マニフェスト JSON を構築中...");
-        let manifest_path = install_dir.join("com.pvdp.discord.presence.json");
         let manifest = serde_json::json!({
             "name": "com.pvdp.discord.presence",
             "description": "PVDP Native Host",
             "path": install_dir.join("pvdp.exe"),
             "type": "stdio",
-            "allowed_origins": [format!("chrome-extension://{}/", extension_id)]
+            "allowed_origins": [format!("chrome-extension://{}/", extension_id)],
         });
 
-        self.log(&format!(
-            "📄 マニフェストファイル書き込み中: {}",
-            manifest_path.display()
-        ));
-
+        let manifest_path = install_dir.join("com.pvdp.discord.presence.json");
+        self.log(&format!("📄 マニフェストファイル書き込み中: \"{}\"", manifest_path.display()));
         fs::write(&manifest_path, serde_json::to_string_pretty(&manifest)?)?;
         self.log("✅ NativeMessaging マニフェスト生成完了");
 
-        self.log("🪟 レジストリへ登録中...");
-        let reg1 = Command::new("reg")
+        self.log("🪟 NativeMessaging レジストリ登録中...");
+        let output = Command::new("reg")
             .args([
                 "add",
                 "HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.pvdp.discord.presence",
@@ -209,31 +229,11 @@ impl InstallerApp {
             ])
             .output()?;
 
-        if reg1.status.success() {
-            self.log("✅ レジストリ登録完了");
+        if output.status.success() {
+            self.log("✅ NativeMessaging レジストリ登録完了");
         } else {
-            return Err(format!("❌ NativeMessaging 登録失敗: {}", String::from_utf8_lossy(&reg1.stderr)).into());
-        }
-
-        self.log("🔧 拡張機能をレジストリに登録中...");
-        let reg2 = Command::new("reg")
-            .args([
-                "add",
-                &format!("HKCU\\Software\\Google\\Chrome\\Extensions\\{}", extension_id),
-                "/v",
-                "path",
-                "/t",
-                "REG_SZ",
-                "/d",
-                &ext_dir.to_string_lossy(),
-                "/f",
-            ])
-            .output()?;
-
-        if reg2.status.success() {
-            self.log("✅ 拡張機能のレジストリ登録完了");
-        } else {
-            return Err(format!("❌ 拡張機能 登録失敗: {}", String::from_utf8_lossy(&reg2.stderr)).into());
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("❌ NativeMessagingレジストリ登録失敗: {}", stderr).into());
         }
 
         Ok(())
