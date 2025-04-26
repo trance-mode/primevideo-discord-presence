@@ -38,7 +38,7 @@ jobs:
         shell: pwsh
         run: |
           $ver = "${{ steps.version.outputs.version }}"
-          (Get-Content native/extension/manifest.json -Raw) -replace '"version": *".+?"', "\"version\": \"$ver\"" |
+          (Get-Content native/extension/manifest.json -Raw) -replace '"version": *".+?"', ('"version": "' + $ver + '"') |
             Set-Content native/extension/manifest.json -Encoding UTF8
 
       - name: ✏️ README.md のバージョンバッジを更新
