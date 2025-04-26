@@ -38,14 +38,14 @@ jobs:
         shell: pwsh
         run: |
           $ver = "${{ steps.version.outputs.version }}"
-          (Get-Content native/extension/manifest.json -Raw) -replace '"version": *".+?"', '"version": "' + $ver + '"' |
+          (Get-Content native/extension/manifest.json -Raw) -replace '"version": *".+?"', "\"version\": \"$ver\"" |
             Set-Content native/extension/manifest.json -Encoding UTF8
 
       - name: ✏️ README.md のバージョンバッジを更新
         shell: pwsh
         run: |
           $ver = "${{ steps.version.outputs.version }}"
-          (Get-Content README.md -Raw) -replace 'version-v[\\d\\.]+-blue', 'version-v' + $ver + '-blue' |
+          (Get-Content README.md -Raw) -replace 'version-v[\\d\\.]+-blue', "version-v$ver-blue" |
             Set-Content README.md -Encoding UTF8
 
       - name: 🔨 ビルド（pvdp, installer, uninstaller）
