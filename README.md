@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/b1c59844-cb3f-4923-bdca-21d3856b58ec)# Prime Video Discord Presence (PVDP)
+# Prime Video Discord Presence (PVDP)
 
 🎬 Amazon Prime Video の再生状況を Discord のステータスに表示する、**Chrome拡張機能 + Rustネイティブアプリ**です。
 
