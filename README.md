@@ -1,6 +1,6 @@
 # Prime Video Discord Presence (PVDP)
 
-🎬 Amazon Prime Video の再生状況を Discord のステータスに表示する、**Chrome 拡張機能 + Rust ネイティブアプリ**です。
+🎬 Amazon Prime Video の再生状況を Discord のステータスに表示する、**Chrome拡張機能 + Rustネイティブアプリ**です。
 
 *A Chrome Extension + Rust Native Host to display your Amazon Prime Video activity as a Discord Rich Presence status.*
 
@@ -14,10 +14,10 @@
 
 - ✅ Prime Video の再生中／停止中を自動検知
 - 🕒 Discord にタイトル・エピソード・残り時間を表示
-- 🚀 Rust ネイティブとの高速通信（Chrome Native Messaging）
-- 🔌 ログビューア連携（WebSocketでリアルタイムログ表示）
-- 🧠 高精度な再生状態判断（UI ボタン検出 + MutationObserver）
-- 🎨 ログの色分け / ステータス表示強化（v1.4.0+）
+- 🚀 Rustネイティブとの高速通信 (Chrome Native Messaging)
+- 🔌 リアルタイムログビューア連携 (WebSocket)
+- 🧠 高精度な再生状態判断 (UIボタン検出 + MutationObserver)
+- 🎨 ログの色分け / ステータス表示強化 (v1.4.0+)
 
 ---
 
@@ -27,25 +27,34 @@
 
 [![Download Installer](https://img.shields.io/badge/Download-pvdp__installer.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_installer.exe)
 
-以下の処理が自動で行われます：
+実行すると、以下が自動で行われます：
 
-- `C:\Program Files\primevideo-discord-presence\` に本体を展開
-- Chrome拡張をレジストリに登録
-- NativeMessaging用マニフェストを生成・登録
+- `C:\Program Files\primevideo-discord-presence\` に本体ファイルを展開
+- NativeMessaging用マニフェストを生成・レジストリ登録
 
-> 💡 インストール完了後、`chrome://extensions` を自動で開くボタンも表示されます。
+> 💡 インストール完了後、Chromeと拡張機能フォルダを開くボタンが表示されます。
 
 ---
 
-## 🖥 Chrome 拡張の有効化（初回のみ）
+### 📢 注意
 
-Chrome の仕様により、拡張は初回インストール時に**自動では有効化されません**。以下の手順で有効化してください：
+当初予定していた **「Chrome Web Store」登録は行わず、ローカルに拡張機能を手動追加する方式** に変更しました。
 
-1. `chrome://extensions` にアクセス（インストーラーでも開けます）
-2. 「Prime Video Discord Presence」が表示されていることを確認
-3. トグルをクリックして「有効」にします ✅
+- Chrome拡張のストア登録には有料（登録料）が必要だったため
+- 現段階では、**ローカル手動追加**方式に切り替えています
 
-> 🔐 一度有効化すれば、次回以降は自動で有効になります。
+> ❗ 将来的には、情勢や需要を見て「Chrome Web Store登録」を検討する可能性もあります。
+
+---
+
+## 🖥 Chrome拡張機能を手動で追加する方法
+
+1. Chromeを開き、アドレスバーに「`chrome://extensions`」と入力してアクセス
+2. 右上の「開発者モード」をONにする
+3. 「パッケージ化されていない拡張機能を読み込む」をクリック
+4. インストーラーが開いた `extension` フォルダを選択
+
+> 🔐 一度読み込めば、次回以降は自動で有効になります。
 
 ---
 
@@ -55,60 +64,39 @@ Chrome の仕様により、拡張は初回インストール時に**自動で�
 
 [![Download Uninstaller](https://img.shields.io/badge/Download-pvdp__uninstaller.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_uninstaller.exe)
 
-1. ダウンロード後、**右クリック → 管理者として実行**
-2. GUIが表示されるので、ログを確認し「Close」ボタンで終了します
-
-実行後、以下が削除されます：
-- `C:\Program Files\primevideo-discord-presence`
-- `HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence`
-- `HKEY_CURRENT_USER\Software\Google\Chrome\Extensions\com.pvdp.discord.presence`
-
 ---
 
-### 🛠 手動で削除する場合（上級者向け）
-
-```powershell
-Remove-Item -Path "C:\Program Files\primevideo-discord-presence" -Recurse -Force
-Remove-Item -Path "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.pvdp.discord.presence" -Force
-Remove-Item -Path "HKCU:\Software\Google\Chrome\Extensions\com.pvdp.discord.presence" -Force
-```
-
----
-
-## 📁 ディレクトリ構成（開発者向け）
+## 📁 ディレクトリ構成
 
 ```
 primevideo-discord-presence/
-├── extension/                  # Chrome拡張（build.rs で埋め込まれる）
-├── native/                     # Rustネイティブ本体（pvdp, installer, uninstaller）
+├── extension/
+├── native/
 │   ├── src/main.rs
-│   └── src/bin/pvdp_installer.rs
+│   ├── src/bin/pvdp_installer.rs
 │   └── src/bin/pvdp_uninstaller.rs
-├── .github/workflows/          # GitHub Actions 定義
+├── .github/workflows/
 ├── README.md
 └── LICENSE
 ```
 
 ---
 
-## ⚙️ 技術スタック / Tech Stack
+## ⚙️ 技術スタック
 
-- Chrome MV3 Extension（manifest v3）
-- Rust + Tokio + [discord-sdk](https://github.com/discord/discord-rs)
-- `warp` + WebSocket + `tracing`（リアルタイムログ送信）
-- `tray-item`（Windows トレイ常駐）
-- `requestAnimationFrame` を使った差分更新
-- ログレベル別の色分け表示 / バージョン表示付き UI
+- Chrome Manifest V3 Extension
+- Rust + Tokio + discord-sdk
+- warp + WebSocket + tracing
+- tray-item
+- requestAnimationFrame
 
 ---
 
 ## 🔄 自動化とCI/CD
 
-このプロジェクトは以下を自動化しています：
-
-- タグ付き push → GitHub Release 自動作成
-- `pvdp.exe`, `pvdp_installer.exe`, `pvdp_uninstaller.exe` をビルドして添付
-- `manifest.json` / `log.js` / `Cargo.toml` のバージョン同期
+- GitHub Release自動作成
+- `pvdp.exe`, `pvdp_installer.exe`, `pvdp_uninstaller.exe` ビルド＆添付
+- バージョン情報同期 (manifest.json, log.js, Cargo.toml)
 
 ---
 
