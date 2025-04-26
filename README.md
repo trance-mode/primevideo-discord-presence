@@ -4,7 +4,7 @@
 
 *A Chrome Extension + Rust Native Host to display your Amazon Prime Video activity as a Discord Rich Presence status.*
 
-![image](https://github.com/user-attachments/assets/54e97a60-f597-4760-8b43-3ae50992528a)
+<img src="https://github.com/user-attachments/assets/54e97a60-f597-4760-8b43-3ae50992528a" width="500" />
 
 ![version](https://img.shields.io/github/v/release/trance-mode/primevideo-discord-presence)
 [![Download Installer](https://img.shields.io/badge/Download-pvdp__installer.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_installer.exe)
