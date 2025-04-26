@@ -38,8 +38,8 @@
 
 ### ✅ 2. extensionフォルダをChrome拡張機能に追加
 
-C:\Program Files\primevideo-discord-presence\にextensionフォルダが追加されます。
-詳しくは下のChrome拡張機能を手動で追加する方法をご覧ください。
+- C:\Program Files\primevideo-discord-presence\にextensionフォルダが追加されます。
+- 詳しくは下のChrome拡張機能を手動で追加する方法をご覧ください。
 
 > 💡 追加後、プライム動画を再生するとDiscordに表示されます。
 
