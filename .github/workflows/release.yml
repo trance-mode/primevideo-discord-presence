@@ -48,9 +48,13 @@ jobs:
           (Get-Content README.md -Raw) -replace 'version-v[\\d\\.]+-blue', "version-v$ver-blue" |
             Set-Content README.md -Encoding UTF8
 
-      - name: 🔨 ビルド（pvdp, installer, uninstaller）
+      - name: 🔨 ビルド pvdp.exe（先にビルド）
         run: |
-          cargo build --release --manifest-path native/Cargo.toml --bin pvdp --bin pvdp_installer --bin pvdp_uninstaller
+          cargo build --release --manifest-path native/Cargo.toml --bin pvdp
+
+      - name: 🔨 ビルド installer / uninstaller（後からビルド）
+        run: |
+          cargo build --release --manifest-path native/Cargo.toml --bin pvdp_installer --bin pvdp_uninstaller
 
       - name: 🚀 リリース作成＆ファイルアップロード
         uses: softprops/action-gh-release@v2
