@@ -1,8 +1,10 @@
-# Prime Video Discord Presence (PVDP)
+![image](https://github.com/user-attachments/assets/b1c59844-cb3f-4923-bdca-21d3856b58ec)# Prime Video Discord Presence (PVDP)
 
 🎬 Amazon Prime Video の再生状況を Discord のステータスに表示する、**Chrome拡張機能 + Rustネイティブアプリ**です。
 
 *A Chrome Extension + Rust Native Host to display your Amazon Prime Video activity as a Discord Rich Presence status.*
+
+![image](https://github.com/user-attachments/assets/54e97a60-f597-4760-8b43-3ae50992528a)
 
 ![version](https://img.shields.io/github/v/release/trance-mode/primevideo-discord-presence)
 [![Download Installer](https://img.shields.io/badge/Download-pvdp__installer.exe-blue?logo=github)](https://github.com/trance-mode/primevideo-discord-presence/releases/latest/download/pvdp_installer.exe)
@@ -33,6 +35,13 @@
 - NativeMessaging用マニフェストを生成・レジストリ登録
 
 > 💡 インストール完了後、Chromeと拡張機能フォルダを開くボタンが表示されます。
+
+### ✅ 2. extensionフォルダをChrome拡張機能に追加
+
+C:\Program Files\primevideo-discord-presence\にextensionフォルダが追加されます。
+詳しくは下のChrome拡張機能を手動で追加する方法をご覧ください。
+
+> 💡 追加後、プライム動画を再生するとDiscordに表示されます。
 
 ---
 
